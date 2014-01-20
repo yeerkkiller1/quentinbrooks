@@ -17,7 +17,15 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	portNumber := flag.Int("port", 8080, "Sets the port the server listens on for both http requests and websocket connections.")
+
+	flag.Parse()
+
 	http.HandleFunc("/", handler)
 
-	log.Println("Started")
+	fmt.Println("Beginning HTTP listening on port", *portNumber)
+	err := http.ListenAndServe(":"+strconv.Itoa(*portNumber), nil)
+	if err != nil {
+		log.Fatal("ListenAndServe:", err)
+	}
 }
