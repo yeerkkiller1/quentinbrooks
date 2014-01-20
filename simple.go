@@ -2,7 +2,7 @@ package main
 
 import (
 	"net/http"
-	"string"
+	"strings"
 )
 
 func handler(w http.ResponseWriter, r *http.Request) {
