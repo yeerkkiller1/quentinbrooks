@@ -25,7 +25,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 	log.Println(url)
 
-	if url == "" {
+	if len(url) <= 1 {
 		url = "/default.htm"
 	}
 
