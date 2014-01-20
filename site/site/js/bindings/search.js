@@ -1,5 +1,5 @@
 /// <amd-dependency path="koExtends/persist">
-define(["require", "exports", "jquery", "knockout", "underscore", "./koControl", "koExtends/persist"], function(require, exports, $, ko, _, koControl) {
+define(["require", "exports", "knockout", "underscore", "./koControl", "koExtends/persist"], function(require, exports, ko, _, koControl) {
     var searchParams = (function () {
         function searchParams() {
         }
@@ -108,6 +108,10 @@ define(["require", "exports", "jquery", "knockout", "underscore", "./koControl",
                     if (match > 0) {
                         matches.push({ match: match, antiMatch: antiMatch, item: item });
                     }
+                });
+
+                matches.sort(function (a, b) {
+                    return (b.match - b.antiMatch) - (a.match - a.antiMatch);
                 });
 
                 return matches;

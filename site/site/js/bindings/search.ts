@@ -104,6 +104,10 @@ class search {
                 }
             });
 
+            matches.sort((a, b) => {
+                return (b.match - b.antiMatch) - (a.match - a.antiMatch);
+            });
+
             return matches;
         });
     }

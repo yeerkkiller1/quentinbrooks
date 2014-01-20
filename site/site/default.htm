@@ -8,6 +8,15 @@
     <link href="css/main.css" rel="stylesheet" type="text/css" />
     <link href="prettify/prettify.css" rel="stylesheet" type="text/css" />
     <script src="prettify/prettify.js" type="text/javascript"></script>
+    <script>
+        function cacheURL(url) {
+            var request = new XMLHttpRequest();
+            request.open("GET", url, true);
+            request.send();
+        }
+
+        //cacheURL("/html/physicsEngine.html");
+    </script>
 </head>
 <body>
     <div data-bind="PageTemplate: {
