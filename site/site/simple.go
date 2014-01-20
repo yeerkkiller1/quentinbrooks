@@ -17,6 +17,10 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/css")
 	}
 
+	if strings.HasSuffix(r.URL.Path, ".js") {
+		w.Header().Set("Cache-Control: max-age=" + (60 * 60)) //Cache for 1 hour
+	}
+
 	url := r.URL.Path
 
 	log.Println(url)
