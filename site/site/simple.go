@@ -16,7 +16,16 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	if strings.HasSuffix(r.URL.Path, ".css") {
 		w.Header().Set("Content-Type", "text/css")
 	}
-	http.ServeFile(w, r, "."+r.URL.Path)
+
+	url := r.URL.Path
+
+	log.Println(url)
+
+	if url == "" {
+		url = "/default.htm"
+	}
+
+	http.ServeFile(w, r, "."+url)
 }
 
 func main() {
