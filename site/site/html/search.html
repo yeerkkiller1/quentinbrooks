@@ -1,0 +1,14 @@
+﻿<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Quentin Brooks</title>
+    <script data-main="/js/boot.js" src="/js/lib/require.js"></script>
+    <link href="/css/main.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+    <div class="jobmineData" data-bind="jobmineData: { url: '/data/jobmine.html' }"></div>
+    <div data-bind="search: $('.jobmineData').data('model')"></div>
+</body>
+</html>
