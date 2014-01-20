@@ -1,4 +1,4 @@
-define(["require", "exports", "knockout", "./loadAndBind"], function(require, exports, ko, loadAndBind) {
+define(["require", "exports", "jquery", "knockout", "./loadAndBind"], function(require, exports, $, ko, loadAndBind) {
     function koControl(ctor, update) {
         var name = ctor.name;
         var url = "/html/koControls/" + name + ".html";

@@ -1,4 +1,4 @@
-define(["require", "exports", "./koControl"], function(require, exports, koControl) {
+define(["require", "exports", "jquery", "knockout", "./koControl"], function(require, exports, $, ko, koControl) {
     var searchDisplayParams = (function () {
         function searchDisplayParams() {
         }

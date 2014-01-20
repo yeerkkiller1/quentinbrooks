@@ -1,5 +1,5 @@
 /// <amd-dependency path="koExtends/persist">
-define(["require", "exports", "knockout", "underscore", "./koControl", "koExtends/persist"], function(require, exports, ko, _, koControl) {
+define(["require", "exports", "jquery", "knockout", "underscore", "./koControl", "koExtends/persist"], function(require, exports, $, ko, _, koControl) {
     var searchParams = (function () {
         function searchParams() {
         }

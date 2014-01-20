@@ -156,6 +156,10 @@ button:active {
     right: 0;
 }
 
+.fullHeightMinusHeader {
+    height: calc(100% - 44px);
+}
+
 .viewWidth {
     width: 95vw;
 }

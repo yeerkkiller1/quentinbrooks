@@ -1,4 +1,4 @@
-﻿require.config({
+require.config({
     paths: {
         jquery: 'lib/jquery',
         underscore: 'lib/underscore',

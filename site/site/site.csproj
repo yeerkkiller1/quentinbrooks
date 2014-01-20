@@ -17,8 +17,16 @@
     <IISExpressUseClassicPipelineMode />
   </PropertyGroup>
   <ItemGroup>
-    <Content Include="css\main.css" />
-    <Content Include="css\main.min.css" />
+    <Content Include="css\main.css">
+      <DependentUpon>main.less</DependentUpon>
+    </Content>
+    <Content Include="css\main.min.css">
+      <DependentUpon>main.less</DependentUpon>
+    </Content>
+    <Content Include="html\koControls\PageTemplate.html" />
+    <Content Include="html\gitDefence.html" />
+    <Content Include="html\mainPage.html" />
+    <Content Include="html\search.html" />
     <Content Include="default.htm" />
     <Content Include="html\koControls\jobmineData.html" />
     <Content Include="html\koControls\search.html" />
@@ -40,13 +48,19 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <TypeScriptCompile Include="js\bindings\ajaxCache.ts" />
+    <TypeScriptCompile Include="js\bindings\iFrameHeight.ts" />
     <TypeScriptCompile Include="js\bindings\jobmineData.ts" />
     <TypeScriptCompile Include="js\bindings\koControl.ts" />
     <TypeScriptCompile Include="js\bindings\loadAndBind.ts" />
+    <TypeScriptCompile Include="js\bindings\PageTemplate.ts" />
+    <TypeScriptCompile Include="js\bindings\remoteTemplate.ts" />
+    <TypeScriptCompile Include="js\bindings\routing.ts" />
     <TypeScriptCompile Include="js\bindings\search.ts" />
     <TypeScriptCompile Include="js\bindings\searchDisplay.ts" />
     <TypeScriptCompile Include="js\boot.ts" />
     <TypeScriptCompile Include="js\geom\Point.ts" />
+    <TypeScriptCompile Include="js\koExtends\persist.ts" />
     <TypeScriptCompile Include="js\main.ts" />
     <TypeScriptCompile Include="js\Typings\jquery.d.ts" />
     <TypeScriptCompile Include="js\Typings\knockout.d.ts" />
