@@ -44,6 +44,17 @@
     }
 }
 
+//Not enough room for 1 line menu
+@media all and (max-width: 918px) {
+    .header {
+        height: 60px!important;
+    }
+
+    .headerOffset {
+        top: 66px!important;
+    }
+}
+
 //Width if you can depend on your container
 .fullWidth {
     width: 100%;
@@ -192,7 +203,7 @@ pre {
 .fullHeightMinusHeader {
     height: calc(~"100% - 42px");
 }
-//#region
+//#endregion
 
 .viewWidth {
     width: 95vw;

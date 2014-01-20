@@ -1,8 +1,8 @@
 require.config({
     paths: {
-        jquery: 'lib/jquery',
-        underscore: 'lib/underscore',
-        knockout: 'lib/knockout'
+        jquery: '//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min',
+        underscore: '//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.5.2/underscore-min',
+        knockout: '//ajax.aspnetcdn.com/ajax/knockout/knockout-3.0.0'
     },
     shim: {
         jquery: {
