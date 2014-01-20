@@ -1,0 +1,200 @@
+﻿<div>
+    <p>
+        <h1>
+            Physics Simulator
+        </h1>
+
+    </p>
+    <h2>
+        SCREENSHOTS
+    </h2>
+    <p>
+        An example of the simulator (the colors are ugly as they are dynamically choosen
+        depending on the weight of the objects). The FPS cannot be entirely trusted as
+        it is skewed by most frames taking no time and some taking a lot (hundreds of
+        milliseconds). The simulation has no smoothing so it jumps a lot, but if it was
+        smoothed (for example by pre-buffering a few frames) it would run fast enough to
+        be rendered as needed (30 FPS at least). The below simulation has 169 objects
+        (165 moving, the other 4 make up the walls).
+    </p>
+    <p>
+        <img src="/imgs/Physics169Objects.gif" />
+    <p>
+        The simulator can handle extremely bunched situations relatively well.
+    </p>
+        <img src="/imgs/BunchedSquare.gif" />
+
+    <br />
+    <br />
+
+    However it values correct general simulation over exact simulation so it is
+    possible for certain objects to temporarily go through each other (such as the
+    bottom circle escaping). This is an issue which could likely be resolved with a
+    refactoring of the engine to handle intersections better, however it is also
+    likely due to the fact that the box &#39;walls&#39; are actually a set of highly packed
+    together immobile circles.<br />
+    <br />
+    <img src="/imgs/BunchedSquareAfter.gif" />
+
+    <h2>Code Examples</h2>
+    <p>Below is the main move function, which is relatively simple.</p>
+
+    <span class="Apple-style-span"
+          style="border-collapse: separate; color: rgb(0, 0, 0); font-family: 'Times New Roman'; font-style: normal; font-variant: normal; font-weight: normal; letter-spacing: normal; line-height: normal; orphans: 2; text-align: -webkit-auto; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-border-horizontal-spacing: 0px; -webkit-border-vertical-spacing: 0px; -webkit-text-decorations-in-effect: none; -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; font-size: medium; ">
+        <span class="Apple-style-span"
+              style="-webkit-border-horizontal-spacing: 2px; -webkit-border-vertical-spacing: 2px; ">
+            <pre class="prettyprint fullWidth">
+public void MoveEverything()
+{
+    decimal timeAfterSteps = CurrentTime + CurrentTimeIncrement; //The time after the current steps have been accounted for
+    FrameControl.Set("Total Objects", worldObjects.Count);
+    int objectsCompletelyGone = 0; //All objects further than 10000 pixels from the origin
+    foreach (Thing thing in worldObjects)
+    {
+        thing.currentCollisions = 0;
+        //thing.vector += new Vector(0, (double)(((decimal)+0.1) * CurrentTimeIncrement));
+        if ((thing.realX * thing.realX + thing.realY * thing.realY) > 1500 * 1500) //Counts the objects further than 10000 pixels from the origin.
+        {
+            objectsCompletelyGone++;
+        }
+    }
+    FrameControl.Set("Object Gone", objectsCompletelyGone);
+    while (upcomingCollisions.Count > 0 &&
+        ((Collision)upcomingCollisions[0]).timeOfOccurence <= timeAfterSteps) //While there are still collisions to deal with in this cycle
+    {
+        //Move up to the first collision, make it happen, then recalculate all collisions which need to be recalculated               
+        CurrentTime = ((Collision)upcomingCollisions[0]).timeOfOccurence;
+        foreach (Thing thing in worldObjects)
+            thing.MoveToCurrent(); //Moves all the objects to the CurrentTime, which is right before the soonest collision
+        Collision collisionToHappen = (Collision)upcomingCollisions[0]; //Make this collision happen
+        Thing projectile = collisionToHappen.projectile;
+        Thing target = collisionToHappen.target;
+        CollisionInfo projectileInfo = projectile.GetCollisionInfo();
+        CollisionInfo targetInfo = target.GetCollisionInfo();
+        double energyBefore = projectile.Energy + target.Energy;
+        //The target is basically hitting the projectile anyway, and the projectile is hitting the target (if only one is happen that means 1 is not moving or will not handle the
+        //collision anyway, so its always okay to throw it to both parties in the collision)
+        double originalTargetRadius = target.radius;
+        double projectileTargetRadius = projectile.radius;
+        target.Collision(projectileInfo, targetInfo);
+        projectile.Collision(targetInfo, projectileInfo);
+        double energyAfter = projectile.Energy + target.Energy;
+        if ((energyBefore * 0.999) > energyAfter || (energyBefore * 1.001) < energyAfter)//energy changed by more than 1%
+        {
+            FrameControl.AddTo("Conservation of Energy Law Broken", 1);
+        }
+        /*This is neccessary, or else the collisions for the things will be recalculated twice, resulting in one collision from possibly thinking it will collide
+        //(but it will not) and then getting the thing it is going to collide with to redo the collision check (so it loses track of the thing that it is not going to collide with)
+        //which allows the collision to happen. Basically, collision 1 recalcs collision 2, then collision 2 recalcs based on the already updated collision and therefore,
+        //kills it and loses information.*/
+        /*The above can be summarized as, the first collision makes the second collision (or could) redo its collision, then it thinks the collision just happened
+        //(as it is getting told to redo its collision again) so it acts like it happened, when infact it did not, this creates serious problems as a third object
+        //will forget that it is (not) going to be hit by the second object, so it doesn't prevent it*/
+        /*
+            * This is necessary because before the first recalculation would get the second object to find who it was going to collide with.
+            * Then when the second object recalcs it already knows who it is going to hit, so after it redoes its collision it told
+            * the object that is was (and still is) going to collide with to forget about the collision and just finds the closest collision.
+            * If the closest collision isn't the second object, it does not know about the second objects collision and does not prevent it.
+            */
+        PhysicsFncs.RemoveCollision(collisionToHappen, PhysicsWindow.upcomingCollisions, PhysicsWindow.upcomingCollisionsByThing);
+        PhysicsFncs.RemoveCollision(collisionToHappen, projectile.collisions, projectile.collisionsByThing);
+        PhysicsFncs.RemoveCollision(collisionToHappen, target.collisions, target.collisionsByThing);
+        target.currentCollisions++;
+        projectile.currentCollisions++;
+        target.lastObjectCollide = projectile;
+        projectile.lastObjectCollide = target;
+        if (target.currentCollisions > MAX_COLLISIONS && projectile.currentCollisions > MAX_COLLISIONS) //We skip recalculating the collisions if these objects have both collided too much.
+        {
+            target.timeOut = true;
+            projectile.timeOut = true;
+            FrameControl.AddTo("Max collisions (" + MAX_COLLISIONS.ToString() + ") reached", 1);
+        }
+        else // Recalculate collisions
+        {
+            //Recalculates the collisions, this could cause a new collision which happens this step (as it will insert stuff into the upcomingCollisions)
+            bool newCollision = target.RecalculateCollisions();
+            bool secondNewCollision = projectile.RecalculateCollisions();
+        }
+        if (target.currentCollisions > currentMaxCollisions)
+        {
+            currentMaxCollisions = target.currentCollisions;
+            FrameControl.Set("Max collisions", currentMaxCollisions);
+        }
+        if (projectile.currentCollisions > currentMaxCollisions)
+        {
+            currentMaxCollisions = projectile.currentCollisions;
+            FrameControl.Set("Max collisions", currentMaxCollisions);
+        }
+    }
+    CurrentTime = timeAfterSteps; //Moves all the objects to the end of the current cycle
+    foreach (Thing thing in worldObjects)
+        thing.MoveToCurrent();
+}  
+  </pre>
+        </span>
+    </span>
+
+    <p>
+        A more complex code example from the physics simulator would be the fundamental function of the entire simulation, the function which determines how long it will take until two circles are within a certain range.
+        It originally functioned by determining the squared difference of the positions
+        of the points based on the time (ex, the distance squared), and then seeing when
+        this would reach the requested value. However in order to optimize it radical
+        changes were made to create
+        <span class="Apple-style-span"
+              style="border-collapse: separate; color: rgb(0, 0, 0); font-family: 'Times New Roman'; font-style: normal; font-variant: normal; font-weight: normal; letter-spacing: normal; line-height: normal; orphans: 2; text-align: -webkit-auto; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-border-horizontal-spacing: 0px; -webkit-border-vertical-spacing: 0px; -webkit-text-decorations-in-effect: none; -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; font-size: medium; ">
+            <span class="Apple-style-span"
+                  style="-webkit-border-horizontal-spacing: 2px; -webkit-border-vertical-spacing: 2px; ">
+                new BetterParabola(in21 * in21 + in22 * in22, 2 * in11 * in21 + 2 * in12 * in22, in11 * in11 + in12 * in12);
+            </span>
+        </span> which
+        finds this just based on the given values (this code section was optimized to
+        the point of almost incomprehensibility as it was a very often run function and
+        took up most of the processing time in the application, as indicated by the Red
+        Gate profiler).
+    </p>
+
+    <span class="Apple-style-span"
+          style="border-collapse: separate; color: rgb(0, 0, 0); font-family: 'Times New Roman'; font-style: normal; font-variant: normal; font-weight: normal; letter-spacing: normal; line-height: normal; orphans: 2; text-align: -webkit-auto; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-border-horizontal-spacing: 0px; -webkit-border-vertical-spacing: 0px; -webkit-text-decorations-in-effect: none; -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; font-size: medium; ">
+        <span class="Apple-style-span"
+              style="-webkit-border-horizontal-spacing: 2px; -webkit-border-vertical-spacing: 2px; ">
+            <pre class="prettyprint">
+public static double FindTimeTilDistance(Vector startOne, Vector velocityOne, Vector startTwo, 
+        Vector velocityTwo, double distance)
+{
+    //These lines (and the CreateParabola) method give a better description of how this works. 
+    //In essense it is by taking the movement of each object and creating a quadratic equation
+    // (as there are two dimensions) which describes the distance of the two lines at any one time.
+    //Turns out this can be greatly simplified, and the more complex version (but easier to understand)
+    //really slows down the code.
+    //Parabola xDifferenceSquared = CreateParabola(startTwo.X - startOne.X, velocityTwo.X - velocityOne.X);
+    //Parabola yDifferenceSquared = CreateParabola(startTwo.Y - startOne.Y, velocityTwo.Y - velocityOne.Y);
+    //Parabola resultant = xDifferenceSquared + yDifferenceSquared;      
+    double in11 = startTwo.X - startOne.X;
+    double in21 = velocityTwo.X - velocityOne.X;
+    double in12 = startTwo.Y - startOne.Y;
+    double in22 = velocityTwo.Y - velocityOne.Y;
+    BetterParabola resultant = new BetterParabola(in21 * in21 + in22 * in22, 2 * in11 * in21 + 2 * in12 * 
+            in22, in11 * in11 + in12 * in12);
+    //DistanceAndTime distanceAndTime = new DistanceAndTime(resultant.h * -1, Math.Sqrt(resultant.k));
+    //The distance and time depends on how what distance you are looking for, the above finds distance of 0
+    double realDistance = distance * distance; //resultant is still the distance squared so we have to look 
+            //for the time of the distance squared
+    //the bufferedDistance will be used, inless using it make the objects appear to intersect, then it will 
+            //not be used.
+    double timeOne = resultant.negativeXAt(realDistance); //There are 2 values because two times produce the
+            //same distance (it is a parabola)
+    double timeTwo = resultant.positiveXAt(realDistance);
+    if (timeOne * timeTwo < 0)//The object appear to be intersecting
+    //This if statement will always return something, and therefore never finish
+    {
+        FrameControl.AddTo("Objects intersecting", 1);
+        return 0; //ALREADY INTERSECTING, not good but it happens                
+    }
+    if (timeOne <= 0) { timeOne = double.PositiveInfinity; } //We don't care about negative times as they 
+        //are impossible
+    if (timeTwo <= 0) { timeTwo = double.PositiveInfinity; }
+    return Math.Min(timeOne, timeTwo); //This will return PositiveInfinity if the inputted points never 
+            //reach the specified distance           
+}
+  </pre>
+</div>

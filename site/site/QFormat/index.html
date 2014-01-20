@@ -1,0 +1,557 @@
+<style>
+    .fitToSize {
+        width:99%; /* Because 100% causes scroll bar to appear... */
+        height:100%;
+        padding:0px;
+        /*  http://stackoverflow.com/questions/6795981/textarea-to-fill-a-parent-container-exactly-with-padding
+            Makes padding work properly (doesn't really work).*/
+        box-sizing: border-box;         /* For IE and modern versions of Chrome */
+        -moz-box-sizing: border-box;    /* For Firefox                          */
+        -webkit-box-sizing: border-box; /* For Safari                           */
+    }
+    .hide {
+        border-width:0px;
+        border-collapse: collapse;
+    }
+/*table.diff tbody th*/
+     .newDiffFormat {
+        font-family:verdana,arial,'Bitstream Vera Sans',helvetica,sans-serif;
+
+        font-size:10px;
+        font-weight:normal;
+        border:1px solid #BBC;
+    }
+
+</style>
+
+<!-- Needed for require -->
+<script src="./nodeBrowser.js"></script>
+
+<!-- Needed for everything, defines global state -->
+<script src="./defaultDebug.js"></script>
+<script src="./debug.js"></script>
+<script src="./fail.js"></script>
+
+
+<!-- Needed for parser -->
+<script src="./acorn/acorn.js"></script>
+
+<script src="./underscore/underscore.js"></script>
+
+<!-- Needed for parser -->
+<script src="./type.js"></script>
+<script src="./common.js"></script>
+
+<script src="./AST.js"></script>
+<script src="./ASTRebrace.js"></script>
+<script src="./ASTReindent.js"></script>
+<script src="./ASTToText.js"></script>
+
+<script src="./formatter.js"></script>
+
+<!-- Needed for jsdiff -->
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/dojo/1.6.0/dojo/dojo.xd.js"></script>
+<script type="text/javascript" src="./jsdifflib/diffview.js"></script>
+<link rel="stylesheet" type="text/css" href="./jsdifflib/diffview.css"/>
+<script type="text/javascript" src="./jsdifflib/difflib.js"></script>
+
+<script src="./jQuery/jquery-1.8.3.min.js"></script>
+<script src="./jQuery/jquery.scrollTo-1.4.3.1-min.js"></script>
+
+Diff table created using <a href="https://github.com/cemerick/jsdifflib">https://github.com/cemerick/jsdifflib</a>
+<br>
+
+<strong>Context size (optional):</strong> <input type="text" id="contextSize" value="" onKeyPress="displayDiff()" onKeyUp="runFormatter()"></input>
+<strong>Code paste box % height:</strong> <input type="text" id="percentHeight" value="80" onKeyPress="resizePage()" onKeyUp="resizePage()"></input>
+<br/>
+
+<strong>Display Mode:</strong>
+<input type="radio" name="_viewtype" checked="checked" id="editRadio" onmouseup="displayEdit()"/> Edit &#160;&#160;
+<input type="radio" name="_viewtype" id="sidebyside" onchange="displayDiff()"/> Diff Side by Side &#160;&#160;
+<input type="radio" name="_viewtype" id="inline" onchange="displayDiff()"/> Diff Inline
+
+<table border="1" id="historyTable" class="hide"></table>
+
+<div id="mainDisplay" height="200px">
+    <div id="edit">
+        <table border="1" id="editTable" class="hide">
+            <tr class="fitToSize">
+                <td width="50%" class="hide">
+                    <textarea rows='5' id="editorTextArea" class="fitToSize"></textarea>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div id="diff">
+        <strong>Diff font size:</strong> <input type="text" id="fontSize" value="12" onKeyPress="setFontSize()" onKeyUp="setFontSize()"></input>
+       <div id="diffOutput" style="align:center"> </div>
+    </div>
+</div>
+
+<div id="extraAtEnd">
+    <div id="editExtra">
+        <tr id="reformatButton">
+            <td width="50%" align="center" class="hide">
+                <button type="button" align="center" onclick="diffDisplayed()"> Reformat Code (or press ctrl-enter) </button>
+            </td>
+        </tr>
+    </div>
+
+    <div id="diffExtra">
+         <tr id="Tr1">
+            <td width="50%" align="center" class="hide">
+            Click on an unchanged line to undo format and continue editing the "Base Text".
+
+            Click on a changed line to edit the "New Text".
+            </td>
+        </tr>
+    </div>
+</div>
+
+<script>
+
+    function resizePage() {
+        //window.innerHeight != $(window).height() for me on chrome... some version or whatever
+        //$(window).height() is useless while window.innerHeight is correct...
+        var percentHeight = $("#percentHeight").val() / 100;
+
+        $("#mainDisplay").height((window.innerHeight - 70) * percentHeight);
+        $("#mainDisplay").width($(window).width() < 800 ? $(window).width() - 20 : $(window).width() - 20);
+
+        $("#editTable").height((window.innerHeight - 70) * percentHeight);
+        $("#editTable").width($(window).width() < 800 ? $(window).width() - 20 : $(window).width() - 14);
+
+        //$("#diff").height((window.innerHeight - 70) * percentHeight);
+        //$("#diff").width($(window).width() < 800 ? $(window).width() - 20 : $(window).width() - 10);
+    }
+
+    //Our sizing and scaling
+    $(window).resize(resizePage);
+    resizePage();
+
+    var formatter = require('./formatter.js');
+
+    //var text = "               function test (a, b) \n { \n return a + b; \n }";
+    //
+    var defaultText =
+"//Code from modified from https://github.com/ianbogda/hex/blob/master/hexpath.html"
++"\n            function everything()"
++"\n{"
++"\nwhile(statelist[end_x][end_y]!=true)"
++"\n{set_first=true;"
++"\nfor(var i in openlist){"
++"\nif(openlist[i]==true){"
++"\nselect_x=openlist_x[i];select_y=openlist_y[i];"
++"\nif(set_first==true){"
++"\nlowest_found=openlist_f[select_x][select_y];"
++"\nset_first=false;}"
++"\nif(openlist_f[select_x][select_y]<=lowest_found)"
++"\n{lowest_found=openlist_f[select_x][select_y];lowest_x=openlist_x[i];"
++"\nlowest_y=openlist_y[i];selected_id=i;}}}"
++"\nif(set_first==true){alert('Nopossibleroutecanbefound.');"
++"\nreturn false;}}}"
++"\n";
+
+    var originalText = defaultText;
+
+    //defaultText = "";
+    //for (var i = 0; i < 10; i++) {
+    //    defaultText += i + "\n";
+    //    defaultText += originalText;
+    //}
+
+    //defaultText = "";
+    //for (var i = 0; i < 200; i++) defaultText += i + "\n";
+
+    $("#editorTextArea").keypress(function (event) {
+        //Ctrl-enter
+        if (event.keyCode == 10 && event.ctrlKey) { //Ctrl is probably redundant here
+            if (curDisplayMode == "edit") {
+                diffDisplayed();
+            }
+        }
+    });
+
+    //edit or diff
+    var curDisplayMode = "edit";
+    //sidebyside or inline
+    var curDiffMode = "inline";
+    var lineNumber = 0;
+    function displayEdit(newLineNumber) {
+        lineNumber = newLineNumber;
+        curDisplayMode = "edit";
+        $("#editRadio")[0].checked = true;
+        $("#sidebyside")[0].checked = false;
+        $("#inline")[0].checked = false;
+        updateDisplayMode();
+    }
+    function displayDiff(newLineNumber) {
+        if (newLineNumber !== undefined) {
+            lineNumber = newLineNumber;
+        }
+
+        curDisplayMode = "diff";
+        $("#editRadio")[0].checked = false;
+
+        var newDiffMode = curDiffMode;
+        if ($("#sidebyside")[0].checked) { newDiffMode = "sidebyside"; };
+        if ($("#inline")[0].checked) { newDiffMode = "inline"; }
+        if (newDiffMode != curDiffMode) {
+            curDiffMode = newDiffMode;
+            //revertCurPos(); //Goes back to the original source
+            diffDisplayed();
+        }
+
+        $("#sidebyside")[0].checked = curDiffMode == "sidebyside";
+        $("#inline")[0].checked = curDiffMode == "inline";
+
+        updateDisplayMode();
+    }
+    function lineNumberToChar(text, lineNumber) {
+        var curLineNumber = 0;
+        for (var i = 0; i < text.length; i++) {
+            //The end line character is assumed to be on the next line as the line it ends, so we check after we increment).
+            if (curLineNumber == lineNumber) return i;
+            if (text[i] == '\n') curLineNumber++;
+        }
+        return text.length - 1;
+    }
+    function charNumberToLineNumber(text, charNum) {
+        var curLineNumber = 0;
+        for (var i = 0; i < text.length; i++) {
+            if (text[i] == '\n') curLineNumber++;
+            //The end line character is assumed to be on the next line as the line it ends, so we check after we increment).
+            if (i == charNum) return curLineNumber;
+        }
+        return curLineNumber;
+    }
+    function getLineCount(text) {
+        var curLineNumber = 0;
+        //1 less, as if the last char is a newline is doesn't really count
+        for (var i = 0; i < text.length - 1; i++) {
+            if (text[i] == '\n') curLineNumber++;
+        }
+        //No new lines == 1 line, etc... so +1
+        return curLineNumber + 1;
+    }
+    function updateDisplayMode() {
+        var prevDisplayMode = curDisplayMode;
+
+        //This look is a hack and we should just call this properly
+        var views = $("#mainDisplay")[0].children;
+        for (var i = 0; i < views.length; i++) {
+            var view = views[i];
+            if (view.style.display != "none") {
+                prevDisplayMode = view.id;
+                break;
+            }
+        }
+
+        //Store some numbers so we can keep track of scroll
+        var textArea = $("#editorTextArea")[0];
+        var mainDisplay = $("#mainDisplay")[0];
+
+        //The new element which needs to be scrolled
+        var prevContainerElement = prevDisplayMode == "diff" ? mainDisplay : textArea;
+
+        //Positions of element in terms of the container element
+        var prevAbsolutePos = 0;
+
+        var prevScrollTop;
+
+        if (prevDisplayMode == "diff") {
+            if (lineNumber !== undefined) {
+                var lineOffset = 0;
+                while (!sourceLineElements[lineNumber]) {
+                    lineOffset++;
+                    if (lineOffset > sourceLineElements.length) break;
+                    if (sourceLineElements[lineNumber + lineOffset]) break;
+                    lineOffset *= -1;
+                    if (sourceLineElements[lineNumber + lineOffset]) break;
+                    lineOffset *= -1;
+                }
+                lineNumber += lineOffset;
+                if (sourceLineElements[lineNumber]) {
+                    prevAbsolutePos = sourceLineElements[lineNumber].offsetTop;
+                }
+            }
+        }
+        else if (prevDisplayMode == "edit") {
+            var lineHeight = textArea.scrollHeight / getLineCount(textArea.value);
+            var textLinePos = charNumberToLineNumber(textArea.value, textArea.selectionStart);
+            prevAbsolutePos = lineHeight * (textLinePos - 0.5);
+
+            if (curDisplayMode == "edit") {
+                lineNumber = textLinePos;
+            }
+        }
+
+        var prevScrollTop = prevContainerElement.scrollTop;
+
+        if ($("#editRadio")[0].checked) curDisplayMode = "edit";
+        if ($("#sidebyside")[0].checked) { curDisplayMode = "diff"; curDiffMode = "sidebyside"; };
+        if ($("#inline")[0].checked) { curDisplayMode = "diff"; curDiffMode = "inline"; }
+
+        var views = $("#mainDisplay")[0].children;
+        for (var i = 0; i < views.length; i++) {
+            var view = views[i];
+            view.style.display = curDisplayMode == view.id ? "" : "none";
+        }
+        var extras = $("#extraAtEnd")[0].children;
+        for (var i = 0; i < extras.length; i++) {
+            var extra = extras[i];
+            extra.style.display = (curDisplayMode + "Extra") == extra.id ? "" : "none";
+        }
+
+        $("#mainDisplay")[0].style["overflow-y"] = curDisplayMode == "edit" ? 'visible' : 'scroll';
+        $("#mainDisplay")[0].style["overflow-x"] = 'visible';
+
+        //Update the scroll position
+        //Handle prevDisplayMode by checking what its current scroll positions
+        //is and translating that. Might have to also clear lineNumber
+
+        var newContainerElement = curDisplayMode == "diff" ? mainDisplay : textArea;
+
+        //Positions of element in terms of the container element
+        var newAbsolutePos;
+
+        //Find what scroll position the line number corresponds to.
+        if (curDisplayMode == "edit") {
+            //Set caret pos
+            {
+                var newCaretPos = lineNumberToChar(textArea.value, lineNumber);
+                textArea.selectionStart = newCaretPos;
+                textArea.selectionEnd = lineNumberToChar(textArea.value, lineNumber + 1);
+            }
+            //setCaretPosition(textArea, newCaretPos);
+            var lineHeight = textArea.scrollHeight / getLineCount(textArea.value);
+            newAbsolutePos = lineHeight * (lineNumber - 3); //Should really be - 0.5, but this number works better.
+                                                            //I think it has something to do with the extra elements in the diff table?
+        }
+        else if (curDisplayMode == "diff") {
+            var lineElem = sourceLineElements[textLinePos];
+            var tempLinePos = textLinePos;
+            while(!lineElem && tempLinePos >= 0) lineElem = sourceLineElements[tempLinePos--];
+            if (lineElem) {
+                var lineElemHeight = lineElem.clientHeight;
+                newAbsolutePos = lineElem.offsetTop + lineElemHeight * 2; //See above comment
+            } else {
+                newAbsolutePos = textLinePos / sourceLineElements.length * mainDisplay.clientHeight;
+            }
+        }
+
+        var prevScrollOffset = prevScrollTop - prevAbsolutePos;
+
+        newContainerElement.scrollTop = newAbsolutePos + prevScrollOffset;
+    }
+
+    //History storage and manipulation
+    var curHistoryPos = -1;
+    var textHistory = []; //{text, adds, dels}
+
+    function updateHistoryTable() {
+    //This way a bad idea, ima just ignore this
+        return;
+        var historyTable = $("#historyTable")[0];
+        while (historyTable.rows.length > 0) {
+            historyTable.deleteRow();
+        }
+
+        var revisionNumbersRow = historyTable.insertRow(0);
+        var linesAddedRow = historyTable.insertRow(1);
+        var linesRemovedRow = historyTable.insertRow(2);
+        var linesTotalRow = historyTable.insertRow(3);
+
+        revisionNumbersRow.insertCell(0).innerText = "Revision Number";
+        linesAddedRow.insertCell(0).innerText = "Lines Added";
+        linesRemovedRow.insertCell(0).innerText = "Lines Removed";
+        linesTotalRow.insertCell(0).innerText = "Total Lines";
+
+        for (var i = 0; i < textHistory.length; i++) {
+            var historyNode = textHistory[i];
+
+            var revisionCell = revisionNumbersRow.insertCell(i + 1);
+            revisionCell.innerText = i;
+            revisionCell.onclick = setHistoryPos.bind(null, i);
+
+            if (i == curHistoryPos) {
+                revisionCell.style.color = "blue";
+            }
+
+            linesAddedRow.insertCell(i + 1).innerText = historyNode.adds;
+            linesRemovedRow.insertCell(i + 1).innerText = historyNode.dels;
+            linesTotalRow.insertCell(i + 1).innerText = getLineCount(historyNode.text);
+        }
+    }
+
+    //Appends to curHistoryPos, and deletes all history after that.
+    function appendToHistory(newText, linesNew, linesRemoved) {
+        //Cut off the end of the history, we are not git, we cannot store a full tree!
+        var trailingHistory = textHistory.length - curHistoryPos - 1;
+        if (trailingHistory > 0) {
+            textHistory.splice(curHistoryPos + 1, trailingHistory);
+        }
+
+        textHistory.push({text: newText, adds: linesNew, dels: linesRemoved});
+        curHistoryPos = textHistory.length - 1;
+
+        setDisplayFromHistoryPos();
+        updateHistoryTable();
+    }
+
+    function setHistoryPos(number) {
+        curHistoryPos = number;
+        setDisplayFromHistoryPos();
+        if (curDisplayMode == "diff") {
+            diffDisplayed();
+        }
+        updateDisplayMode();
+    }
+
+    function revertCurPos(newLineNumber) {
+        curHistoryPos--;
+        setDisplayFromHistoryPos();
+        displayEdit(newLineNumber);
+    }
+
+    //Not 2 seperate functions because we should be the only function
+    //setting the display, as we need to update the history table.
+    function setDisplayFromHistoryPos() {
+        updateHistoryTable();
+
+        $("#editorTextArea").val(getCurText());
+    }
+
+    function getCurText() {
+        if (textHistory.length == 0) {
+            appendToHistory(defaultText, getLineCount(defaultText), 0);
+        }
+        curHistoryPos = Math.min(Math.max(curHistoryPos, 0), textHistory.length - 1);
+        return textHistory[curHistoryPos].text;
+    }
+
+    //End history storage and manipulation
+
+    var finalText = "";
+    function diffDisplayed() {
+        var editorTextArea = $("#editorTextArea").val();
+        if (editorTextArea != getCurText()) {
+            //The user modified the text from the textbox, we add this as a change just for them.
+            diffUsingJS(editorTextArea, getCurText());
+            appendToHistory(editorTextArea, lineAdditions, lineDeletions);
+        }
+
+        try {
+            finalText = formatter.reformat(editorTextArea);
+        } catch (err) {
+            if(DFlag.debug)
+                throw err;
+
+            finalText = err + '';
+        }
+
+        diffUsingJS(editorTextArea, finalText);
+        setFontSize();
+
+        if (finalText != editorTextArea && curDisplayMode == "edit") {
+            appendToHistory(finalText, lineAdditions, lineDeletions);
+        }
+
+        displayDiff();
+    }
+
+    function setFontSize() {
+        $("table.diff").addClass('newDiffFormat');
+        $('.newDiffFormat').css('font-size', $('#fontSize').val() + 'px');
+    }
+
+    //From view-source:http://cemerick.github.com/jsdifflib/demo.html
+    //var $ = dojo.byId;
+    var url = window.location.toString().split("#")[0];
+
+    //Really really got to make these returns, this global state is killing me.
+    var sourceLineElements = [];
+    var lineAdditions = 0;
+    var lineDeletions = 0;
+    function diffUsingJS(base, newtxt) {
+        base = difflib.stringAsLines(base);
+        newtxt = difflib.stringAsLines(newtxt);
+
+        lineAdditions = 0;
+        lineDeletions = 0;
+
+        var sm = new difflib.SequenceMatcher(base, newtxt);
+        var opcodes = sm.get_opcodes();
+
+        var diffoutputdiv = $("#diffOutput")[0];
+        while (diffoutputdiv.firstChild) diffoutputdiv.removeChild(diffoutputdiv.firstChild);
+
+        var contextSize = $("#contextSize").val();
+
+        contextSize = contextSize ? contextSize : null;
+
+        var diffTable = diffview.buildView({ baseTextLines: base,
+            newTextLines: newtxt,
+            opcodes: opcodes,
+            baseTextName: "Base Text",
+            newTextName: "New Text",
+            contextSize: contextSize,
+            viewType: curDiffMode == "inline"
+        });
+
+        //tbody
+        var lineTable = diffTable.children[1];
+        for(var j = 0; j < lineTable.children.length; j++) {
+            var line = lineTable.children[j];
+            //This if block should have so many of its sections factored to outside the if block...
+            if (curDiffMode == "inline") {
+                if (line.nodeName != "TR" || line.children.length < 3) continue;
+
+                var sourceLineNumber = line.children[0].innerText;
+                var destLineNumber = line.children[1].innerText;
+
+                var changeType = line.children[2].className;
+
+                if (changeType == "equal") {
+                    line.onclick = revertCurPos.bind(null, sourceLineNumber - 1);
+                    sourceLineElements[sourceLineNumber - 1] = line;
+                } else {
+                    line.onclick = displayEdit.bind(null, destLineNumber - 1);
+
+                    var addition = changeType == "insert";
+                    var deletion = changeType == "delete";
+
+                    if (addition) lineAdditions++;
+                    if (deletion) lineDeletions++;
+                }
+            } else {
+                if (line.nodeName != "TR" || line.children.length < 4) continue;
+
+                var sourceLineNumber = line.children[0].innerText;
+                var destLineNumber = line.children[2].innerText;
+
+                var sourceLine = line.children[1];
+                sourceLine.onclick = revertCurPos.bind(null, sourceLineNumber - 1);
+                sourceLineElements[sourceLineNumber - 1] = line;
+
+                var destLine = line.children[3];
+                destLine.onclick = displayEdit.bind(null, destLineNumber - 1);
+
+                var addition = sourceLine.className == "replace";
+                //I am not entirely sure what kind of deltas I will get... this may be overkill... but...
+                var deletion = !addition && (destLine.className == "replace" || sourceLine.className == "replace");
+
+                if (addition) lineAdditions++;
+                if (deletion) lineDeletions++;
+            }
+        }
+
+        diffoutputdiv.appendChild(diffTable);
+        window.location = url + "#diff";
+    }
+
+    setDisplayFromHistoryPos();
+    displayEdit();
+    diffDisplayed();
+</script>

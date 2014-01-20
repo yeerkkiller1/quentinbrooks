@@ -1,0 +1,144 @@
+﻿<p>
+    <h1>
+        Tic-Tac-Toe
+    </h1>
+
+</p>
+<h2>
+    SCREENSHOTS
+</h2>
+<p>
+    This is the actual game I created.
+</p>
+<p>
+    <object width="800" height="600">
+        <embed src="shame/ticTacToe.swf" width="800" height="600" type="application/x-shockwave-flash"></embed>
+    </object>
+    <h2>Code Examples</h2>
+<p>
+    Below is the code which creates the movement, size change and repulsion of the
+    &#39;bubbles&#39;.
+</p>
+
+<span class="Apple-style-span"
+      style="border-collapse: separate; color: rgb(0, 0, 0); font-family: 'Times New Roman'; font-style: normal; font-variant: normal; font-weight: normal; letter-spacing: normal; line-height: normal; orphans: 2; text-align: -webkit-auto; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-border-horizontal-spacing: 0px; -webkit-border-vertical-spacing: 0px; -webkit-text-decorations-in-effect: none; -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; font-size: medium; ">
+    <span class="Apple-style-span"
+          style="-webkit-border-horizontal-spacing: 2px; -webkit-border-vertical-spacing: 2px; ">
+        <pre class="prettyprint">
+import flash.geom.Matrix;
+import flash.geom.ColorTransform;
+for(var a = 0; a < bubbles.length; a++)
+{		
+	//Randomly changes the velocity. (Math.random() - 0.5) * 2, will Randomly choose
+	//a velocity magntitude and direction, - (bubbles[a].x / this.width) keeps it from
+	//straying too far from the origin.
+	
+	xVelocities[a] += (Math.random() - 0.5) * 2 - (bubbles[a].x / this.width);		
+	
+	yVelocities[a] += (Math.random() - 0.5) * 2 - (bubbles[a].y / this.height);		
+	
+	//This makes the bubbles smallest as they move faster.
+	var speed : Number = Math.pow((xVelocities[a] * xVelocities[a] + 
+						  yVelocities[a] * yVelocities[a]), 0.5);
+	
+	bubbles[a].width = 15 / (Math.pow(speed, 0.2));
+	bubbles[a].height = 15 / (Math.pow(speed, 0.2));	
+	
+	//This section makes the bubbles move away from the mouse. (not directly away,
+	//that would require too much trig, this just makes it tend to move away, when it
+	//gets close enough.
+	
+	var distance : Number = 
+	Math.pow(((bubbles[a].x - mouseX) * (bubbles[a].x - mouseX) +
+	(bubbles[a].y - mouseY) * (bubbles[a].y - mouseY)), 0.5);	
+	
+	if(distance < 100)
+	{
+		xVelocities[a] += int((bubbles[a].x - mouseX) / Math.pow(distance, 0.5));		
+		yVelocities[a] += int((bubbles[a].y - mouseY) / Math.pow(distance, 0.5)) ;		
+	}
+	
+	//These cap off the movement speed, so things do not gradually increase in speed.
+	xVelocities[a] = Math.min(xVelocities[a], 7);
+	xVelocities[a] = Math.max(xVelocities[a], -7);
+	
+	yVelocities[a] = Math.min(yVelocities[a], 7);
+	yVelocities[a] = Math.max(yVelocities[a], -7);
+	
+	//Moves the bubble
+	bubbles[a].x += xVelocities[a];
+	bubbles[a].y += yVelocities[a];
+} 
+  </pre>
+    </span>
+</span>
+
+<p>
+    Below is the code which evalutes when the game is over and if it is who won. It
+    works through simple recursion (it treats the board as a 2D grid and effectively
+    draws every possible winning line to see if any of them exist).
+</p>
+
+<span class="Apple-style-span"
+      style="border-collapse: separate; color: rgb(0, 0, 0); font-family: 'Times New Roman'; font-style: normal; font-variant: normal; font-weight: normal; letter-spacing: normal; line-height: normal; orphans: 2; text-align: -webkit-auto; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-border-horizontal-spacing: 0px; -webkit-border-vertical-spacing: 0px; -webkit-text-decorations-in-effect: none; -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; font-size: medium; ">
+    <span class="Apple-style-span"
+          style="-webkit-border-horizontal-spacing: 2px; -webkit-border-vertical-spacing: 2px; ">
+        <pre class="prettyprint">
+public function checkWin() : Boolean
+{
+	for(var xTry = 0; xTry < 3; xTry++)
+		for(var yTry = 0; yTry < 3; yTry++)				
+			for(var xDir = -1; xDir < 2; xDir++)
+				for(var yDir = -1; yDir < 2; yDir++)
+				{
+					if(xDir != 0 || yDir != 0)
+						winner = winningLine(xTry, yTry, xDir, yDir, 1) - 1; 
+                        //We use winner as a temporary storage here
+					if(winner >= 1)
+					{
+						if(winner == 1)
+							xWins++;
+						else
+							oWins++;
+									
+						return true;
+					}
+				}						
+	return false;
+}
+public function winningLine (startX : int, startY : int, 
+								xDir : int, yDir : int, 
+								numberFound : int) : int
+{
+	if(numberFound == 3)
+		return squares[startY][startX].currentFrame;
+			
+	if(squares[startY][startX].currentFrame == 1) //Empty, not winning line
+	{
+		return 1;
+	}
+	else			
+	{
+		startX += xDir;
+		startY += yDir;
+				
+		if(validPosition(startX, startY))
+			if(squares[startY][startX].currentFrame == 
+				squares[startY - yDir][startX - xDir].currentFrame)
+					return winningLine(startX, startY, xDir, yDir, numberFound + 1);
+						 
+		return 1;
+	}
+}
+		
+public function validPosition(xPos : int, yPos : int) : Boolean
+{
+	if(xPos < 0 || xPos >= 3 ||
+		yPos < 0 || yPos >= 3)
+		return false;
+	else
+		return true;
+}
+</pre>
+    </span>
+</span>

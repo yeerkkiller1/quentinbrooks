@@ -1,0 +1,302 @@
+﻿<p>
+    <h1>
+        Zombie Invasion
+    </h1>
+
+</p>
+<h2>
+    Screenshots
+</h2>
+<p>
+    An example of the user interface.
+</p>
+<p>
+      <img src="imgs/Interface.gif"/>
+    </a>
+</p>
+<p>
+    An example of multiple enemies and walls.
+</p>
+<p>
+    <img src="imgs/Maze.gif" />
+    </a>
+</p>
+<h2>
+    Code Examples
+</h2>
+<p>
+    An example of an ability class. While the abilities are somewhat standardized
+    (most have a cooldown, a cost and then an effect), they are entirely
+    customizable and can radically be changed with only a few line changes.
+    For example, this ability gains the ability to be targeted by adding
+    SquareSelector and TargetedToggleable. It could be made to have an area effect
+    by simply moving the TargetObtained method directly to the BeginCast, and
+    replacing the foreach loop with two x and y co-ordinate loops.
+</p>
+<span class="Apple-style-span"
+      style="border-collapse: separate; color: rgb(0, 0, 0); font-family: 'Times New Roman'; font-style: normal; font-variant: normal; font-weight: normal; letter-spacing: normal; line-height: normal; orphans: 2; text-align: -webkit-auto; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-border-horizontal-spacing: 0px; -webkit-border-vertical-spacing: 0px; -webkit-text-decorations-in-effect: none; -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; font-size: medium; ">
+    <span class="Apple-style-span"
+          style="-webkit-border-horizontal-spacing: 2px; -webkit-border-vertical-spacing: 2px; ">
+        <pre class="prettyprint">
+    public class DestroyArmor : Ability
+    {
+        public static Texture2D texturePicture = null;
+        public static string ToolTip =
+@"Cost - 30 fatigue
+Benefits - targeted enemy 
+  takes 2x more of all 
+  types of damage for 30
+  seconds
+Cooldown - 10 seconds
+Range - 5 squares
+Scales with % fatigue";
+        public SquareSelector squareSelector;
+        public DestroyArmor(Character caster)
+            : base(caster, true)
+        {
+            costToCast.fatigue = 30;
+        }
+        public override List<baseevent> BeginCast()
+        {
+            AddChild(squareSelector = new SquareSelector(caster, 5));
+            AddChild(new TargetedToggleable());
+            return base.BeginCast();
+        }
+        public override List<baseevent> TargetObtained(SquareEvent squareClicked)
+        {
+            List<baseevent> eventsCreated = new List<baseevent>();
+            List<baseobject> targets = world.GetPosition(squareClicked.squareClicked);
+            foreach (BaseObject baseObject in targets)
+            {
+                if (baseObject is Character
+                    && baseObject != caster)
+                {
+                    eventsCreated.Add(new TryCastAbility(new MultiplicativeDamageChange(caster, new BaseStats(
+                        Math.Max(2 * GetEffectiveness(), 1.1), 1, 1), 30000, true, (Character)baseObject),
+                        baseObject, caster));
+                    eventsCreated.AddRange(squareSelector.EndCast());
+                    AddChild(new AbilityTimer(10000));
+                    return eventsCreated; //We can only effect one character
+                }
+            }
+            eventsCreated.AddRange(EndCast());
+            return eventsCreated;
+        }
+        public override double GetEffectiveness()
+        {
+            return base.GetEffectiveness() * (caster.currentStats.fatigue / caster.maxStats.fatigue);
+        }
+    }
+  
+  </pre>
+    </span>
+</span>
+<p>
+    The majority of the code logic is not hidden through the use of many helper classes though, for example
+    the SquareSelector class which makes it easy to indicate squares for abilities
+    and movement is relatively small. This handles all of the drawing and makes it
+    possible for squares to be selected by abilities and non-abilities such as
+    MouseDirectedMovement (which requires storing a static instance created during
+    game initialization).
+</p>
+<p>
+    This code was coded even faster than expected as most of it could be
+    auto-completed in Visual Studio. For example to add the HandleEvent method only
+    &#39;public override H&#39; needed to be typed, then the environment automatically
+    detected that HandleEvent fit this and made it possible to automatically complete the
+    entire method signature. This is the primary benefit to actually creating code
+    in the source code for every Ability, as it allows the extraordinarily powerful
+    Visual Studio features to be utilized.
+</p>
+<span class="Apple-style-span"
+      style="border-collapse: separate; color: rgb(0, 0, 0); font-family: 'Times New Roman'; font-style: normal; font-variant: normal; font-weight: normal; letter-spacing: normal; line-height: normal; orphans: 2; text-align: -webkit-auto; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-border-horizontal-spacing: 0px; -webkit-border-vertical-spacing: 0px; -webkit-text-decorations-in-effect: none; -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; font-size: medium; ">
+    <span class="Apple-style-span"
+          style="-webkit-border-horizontal-spacing: 2px; -webkit-border-vertical-spacing: 2px; ">
+        <pre class="prettyprint">
+    /// <summary>
+    /// Everything which uses this MUST use maxDistance, and do nothing (except end the initial cast)
+    /// when it is given a location with nothing on it (-1,-1). And when you are done with this always
+    /// call EndCast, or else it will continue to throw you events.
+    /// </summary>
+    public class SquareSelector : Ability
+    {
+        public static Texture2D texturePicture = null;
+        public static IntPoint currentlySelectedSquare = new IntPoint(-1, -1);
+        public static SquareSelector currentSquareSelector;
+        public Character originalCaster;
+        public double maxDistance;
+        public SquareSelector(Character _originalCaster, double _maxDistance)
+            : base(_originalCaster, false) 
+        {
+            originalCaster = _originalCaster;
+            maxDistance = _maxDistance;
+        }
+        public override void AddedAsChild()
+        {
+            if (currentSquareSelector != null) //Remove the old one
+            {
+                currentSquareSelector.parent.RemoveChild(currentSquareSelector);
+            }
+            currentSquareSelector = this;
+            ((Ability)parent).currentCooldown = -1; //Highlights the ability
+            ((Ability)parent).baseCooldown = -1;            
+            base.AddedAsChild();
+        }
+        public override void RemovedAsChild()
+        {
+            currentSquareSelector = null;
+            base.RemovedAsChild();
+        }
+        public override List<baseevent> EndCast()
+        {
+            currentSquareSelector = null;
+            return base.EndCast();
+        }
+        List<baseevent> eventsCreated = new List<baseevent>();
+	public override List<baseevent> HandleEvent(BaseEvent givenEvent)
+	{
+		eventsCreated.Clear();
+            if (givenEvent.type == E.MOUSE_DOWN)
+            {
+                if (givenEvent.relativePosition == E.CURRENT)
+                {
+                    eventsCreated.AddRange(MouseClicked((MouseEvent)givenEvent));
+                }
+            }
+            if (givenEvent.type == E.MOUSE_HELD)
+            {
+                if (givenEvent.relativePosition == E.CURRENT)
+                {
+                    eventsCreated.AddRange(MouseHeld((MouseEvent)givenEvent));
+                }
+            }
+            eventsCreated.AddRange(base.HandleEvent(givenEvent));
+            return eventsCreated;
+        }
+        public List<baseevent> MouseClicked(MouseEvent mouseEvent)
+        {
+            List<baseevent> eventsCreated = new List<baseevent>();
+            if ((currentlySelectedSquare - originalCaster.MajorPosition()).magnitude < maxDistance)
+            {
+                eventsCreated.Add(new SquareClicked(currentlySelectedSquare, (Ability)parent, this));                
+            }
+            else
+            {
+                //Creates an event which will satisfy the caster, but will not cause a spell cast
+                eventsCreated.Add(new SquareClicked(new IntPoint(-1, -1), (Ability)parent, this));
+            }
+            return eventsCreated;
+        }
+        public List<baseevent> MouseHeld(MouseEvent mouseEvent)
+        {
+            List<baseevent> eventsCreated = new List<baseevent>();
+            if ((currentlySelectedSquare - originalCaster.MajorPosition()).magnitude < maxDistance)
+            {
+                eventsCreated.Add(new SquareHeld(currentlySelectedSquare, (Ability)parent, this));
+            }
+            else
+            {
+                //Creates an event which will satisfy the caster, but will not cause a spell cast
+                eventsCreated.Add(new SquareHeld(new IntPoint(-1, -1), (Ability)parent, this));
+            }
+            return eventsCreated;
+        }
+        public override void HandleDraw(SpriteBatch spriteBatch, GameTime gameTime)
+        {
+            currentlySelectedSquare = ((IntPoint)(MouseEvent.mousePos - DrawableObject.drawOffset - new DoublePoint(0.5, 0.5)));
+            if ((currentlySelectedSquare - originalCaster.MajorPosition()).magnitude < maxDistance)
+            {
+                DRAW.RelativeRectangle(currentlySelectedSquare + DrawableObject.drawOffset,
+                    new DoublePoint(1, 1), texturePicture, Color.Green);
+            }
+            else
+            {
+                DRAW.RelativeRectangle(currentlySelectedSquare + DrawableObject.drawOffset,
+                    new DoublePoint(1, 1), texturePicture, Color.Red);
+            }
+            base.HandleDraw(spriteBatch, gameTime);
+        }
+    }
+    </pre>
+    </span>
+</span>The result of this code in the game is as follows:
+<br />
+<asp:Image ID="Image3" class="center" runat="server"
+           ImageUrl="Pictures/MouseSelector.gif" Width="729px" />
+        </a>
+<br />
+<br />
+    The square selected is surrounded in green. If the cursor was moved outside the
+    range of the ability it would change to red. The currently selected ability is
+    the DestroyArmor ability (on the G key), as indicated by the whiteout on the
+    ability key and its appearance on the active ability bar (above the A key). If
+    the mouse is clicked within the abilities range it will be notified and the
+    mouse highlighting will stop, if it is clicked outside of the range the ability
+    will be unselected (so it is not waiting for a position), and the mouse
+    highlighting will stop.<br />
+<br />
+    All of this structure makes incredible changes outrageously easy to
+    implement. For example after coding all of the movement I decided that I would
+    like to use the move to move instead of the arrow keys. So I added this small
+    class and a 1 line statement to add it to the HumanCharacter class. Utilizing
+    existing classes it worked exactly as one would expect, with very little
+    coding effort. </p>
+<span class="Apple-style-span"
+      style="border-collapse: separate; color: rgb(0, 0, 0); font-family: 'Times New Roman'; font-style: normal; font-variant: normal; font-weight: normal; letter-spacing: normal; line-height: normal; orphans: 2; text-align: -webkit-auto; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-border-horizontal-spacing: 0px; -webkit-border-vertical-spacing: 0px; -webkit-text-decorations-in-effect: none; -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; font-size: medium; ">
+    <span class="Apple-style-span"
+          style="-webkit-border-horizontal-spacing: 2px; -webkit-border-vertical-spacing: 2px; ">
+        <pre class="prettyprint">
+    public class MouseDirectedMovement : BaseObject
+    {
+        HumanCharacter humanCharacter;
+        bool mousePressedForAbility = false;
+        public MouseDirectedMovement(HumanCharacter _humanCharacter)
+        {
+            humanCharacter = _humanCharacter;
+        }
+        List<baseevent> eventsCreated = new List<baseevent>();
+        public override List<baseevent> HandleEvent(BaseEvent givenEvent)
+        {
+            eventsCreated.Clear();
+            if (givenEvent.type == E.MOUSE_DOWN)
+            {
+                if (givenEvent.relativePosition == E.CURRENT)
+                {
+                    mousePressedForAbility = SquareSelector.currentSquareSelector != null;
+                }
+            }
+            if (givenEvent.type == E.MOUSE_DOWN || givenEvent.type == E.MOUSE_HELD)
+            {
+                if (givenEvent.relativePosition == E.CURRENT)
+                {
+                    eventsCreated.AddRange(MouseClicked((MouseEvent)givenEvent));
+                }
+            }
+            eventsCreated.AddRange(base.HandleEvent(givenEvent));
+            return eventsCreated;
+        }
+        public List<baseevent> MouseClicked(MouseEvent mouseEvent)
+        {
+            List<baseevent> eventsCreated = new List<baseevent>();
+            if (!mousePressedForAbility) //We are not waiting for a button press for something else
+            {
+                IntPoint currentlySelectedSquare = ((IntPoint)(MouseEvent.mousePos - DrawableObject.drawOffset - new DoublePoint(0.5, 0.5)));
+                eventsCreated.Add(new ChangeCurrentMovementDirection(new DoublePoint(0, 0),
+                    currentlySelectedSquare, 0, humanCharacter));
+            }
+            return eventsCreated;
+        }
+        public override void HandleDraw(SpriteBatch spriteBatch, GameTime gameTime)
+        {
+            if (SquareSelector.currentSquareSelector == null) //We are not waiting for a button press for something else
+            {
+                IntPoint currentlySelectedSquare = ((IntPoint)(MouseEvent.mousePos - DrawableObject.drawOffset - new DoublePoint(0.5, 0.5)));
+                DRAW.RelativeRectangle(currentlySelectedSquare + DrawableObject.drawOffset,
+                    new DoublePoint(1, 1), SquareSelector.texturePicture, Color.White);
+            }
+            base.HandleDraw(spriteBatch, gameTime);
+        }
+    }
+        </pre>
+    </span>
+</span>

@@ -99,6 +99,14 @@ button:active {
     padding: 8px;
 }
 
+img {
+    max-width: 100%;
+}
+
+pre {
+    overflow-wrap: break-word;
+}
+
 .header {
     position: fixed;
     z-index: 1000;
@@ -111,7 +119,7 @@ button:active {
 .headerOffset {
     z-index: 0;
     position: relative;
-    top: 36px;
+    top: 42px;
 }
 
 .center0 {
@@ -157,7 +165,7 @@ button:active {
 }
 
 .fullHeightMinusHeader {
-    height: calc(100% - 44px);
+    height: calc(100% - 42px);
 }
 
 .viewWidth {
