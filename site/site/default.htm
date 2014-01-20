@@ -8,12 +8,16 @@
     <link href="css/main.css" rel="stylesheet" type="text/css" />
     <link href="prettify/prettify.css" rel="stylesheet" type="text/css" />
     <script src="prettify/prettify.js" type="text/javascript"></script>
+    <!-- Just to speed up loading -->
+    <script src="//ajax.aspnetcdn.com/ajax/knockout/knockout-3.0.0"></script>
     <script>
         function cacheURL(url) {
             var request = new XMLHttpRequest();
             request.open("GET", url, true);
             request.send();
         }
+
+        cacheURL("/html/koControls/PageTemplate.html");
 
         cacheURL("/html/physicsEngine.html");
         cacheURL("/html/gitDefence.html");
@@ -22,6 +26,7 @@
         cacheURL("/html/physicsEngine.html");
         cacheURL("/html/ticTacToe.html");
         cacheURL("/html/zombieGame.html");
+
         cacheURL("/js/bindings/ajaxCache.js");
         cacheURL("/js/bindings/iFrameHeight.js");
         cacheURL("/js/bindings/koControl.js");
