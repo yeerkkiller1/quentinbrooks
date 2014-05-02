@@ -1,4 +1,4 @@
-﻿define(["require", "exports", "jquery", "knockout", "./ajaxCache"], function(require, exports, $, ko, ajax) {
+define(["require", "exports", "jquery", "knockout", "./ajaxCache"], function(require, exports, $, ko, ajax) {
     function loadAndBind(element, url, data) {
         var loadedElems = ko.observable();
         $(element).data("model", data);

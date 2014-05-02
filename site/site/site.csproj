@@ -23,6 +23,12 @@
     <Content Include="css\main.min.css">
       <DependentUpon>main.less</DependentUpon>
     </Content>
+    <Content Include="html\buildBlast.html" />
+    <Content Include="html\qFormat.html" />
+    <Content Include="html\zombieGame.html" />
+    <Content Include="html\resultsGraph.html" />
+    <Content Include="html\ticTacToe.html" />
+    <Content Include="html\physicsEngine.html" />
     <Content Include="html\koControls\PageTemplate.html" />
     <Content Include="html\gitDefence.html" />
     <Content Include="html\mainPage.html" />
@@ -35,7 +41,9 @@
     <Content Include="js\lib\knockout.js" />
     <Content Include="js\lib\require.js" />
     <Content Include="js\lib\underscore.js" />
-    <Content Include="web.config" />
+    <Content Include="web.config">
+      <SubType>Designer</SubType>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <Content Include="css\main.less" />
