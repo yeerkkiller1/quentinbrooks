@@ -1,4 +1,4 @@
-.startClickThrough {
+﻿.startClickThrough {
   pointer-events: none;
 }
 .stopClickThrough {
@@ -7,29 +7,40 @@
 .termMatch {
   background-color: lightgreen;
 }
+.headerOffset {
+  z-index: 0;
+  position: relative;
+}
 @media all and (min-width: 1010px) {
   .mediaWidth {
     width: 1000px;
+  }
+  .headerOffset {
+    top: 42px!important;
   }
 }
 @media all and (max-width: 1010px) and (min-width: 910px) {
   .mediaWidth {
     width: 900px;
   }
+  .headerOffset {
+    top: 66px!important;
+  }
 }
 @media all and (max-width: 910px) and (min-width: 690px) {
   .mediaWidth {
     width: 680px;
+  }
+  .headerOffset {
+    top: 66px!important;
   }
 }
 @media all and (max-width: 690px) {
   .mediaWidth {
     width: 400px;
   }
-}
-@media all and (max-width: 918px) {
   .headerOffset {
-    top: 66px!important;
+    top: 96px!important;
   }
 }
 .fullWidth {
@@ -90,15 +101,14 @@ pre {
   overflow-wrap: break-word;
 }
 .header {
-  position: fixed;
   z-index: 1000;
   border-bottom: 1px solid #e5e5e5;
   padding: 7px;
 }
-.headerOffset {
-  z-index: 0;
-  position: relative;
-  top: 42px;
+.headerHolder {
+  z-index: 1000;
+  position: fixed;
+  width: 100%;
 }
 .center0 {
   width: 100%;

@@ -32,6 +32,8 @@ export class SearchQuery {
 
 class search {
     public searchQuery = ko.observable("").extend({persist: 'searchQuery'});
+    public titleOnly = ko.observable(false);
+
     public results: KnockoutComputed<any[]>;
 
     searchData: KnockoutObservableArray<any>;
@@ -82,10 +84,14 @@ class search {
 
             //With a lookup table this could become much much faster...
             _.forEach(this.searchData(), item => {
+                var itemToSearch = item;
+                if(this.titleOnly()) {
+                    itemToSearch = item.jobTitle;
+                }
                 var match = 0;
                 var antiMatch = 0;
 
-                var rawText = JSON.stringify(item).toLowerCase();
+                var rawText = JSON.stringify(itemToSearch).toLowerCase();
 
                 _.forEach(matchTerms, term => {
                     if (rawText.indexOf(term) >= 0) {

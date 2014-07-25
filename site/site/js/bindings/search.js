@@ -1,5 +1,5 @@
 /// <amd-dependency path="koExtends/persist">
-define(["require", "exports", "jquery", "knockout", "underscore", "./koControl", "koExtends/persist"], function(require, exports, $, ko, _, koControl) {
+define(["require", "exports", "knockout", "underscore", "./koControl", "koExtends/persist"], function(require, exports, ko, _, koControl) {
     var searchParams = (function () {
         function searchParams() {
         }
@@ -34,6 +34,7 @@ define(["require", "exports", "jquery", "knockout", "underscore", "./koControl",
     var search = (function () {
         function search(element, params) {
             this.searchQuery = ko.observable("").extend({ persist: 'searchQuery' });
+            this.titleOnly = ko.observable(false);
             this.searchData = params.array;
 
             this.setupSearchQuery();
@@ -88,10 +89,14 @@ define(["require", "exports", "jquery", "knockout", "underscore", "./koControl",
 
                 //With a lookup table this could become much much faster...
                 _.forEach(_this.searchData(), function (item) {
+                    var itemToSearch = item;
+                    if (_this.titleOnly()) {
+                        itemToSearch = item.jobTitle;
+                    }
                     var match = 0;
                     var antiMatch = 0;
 
-                    var rawText = JSON.stringify(item).toLowerCase();
+                    var rawText = JSON.stringify(itemToSearch).toLowerCase();
 
                     _.forEach(matchTerms, function (term) {
                         if (rawText.indexOf(term) >= 0) {

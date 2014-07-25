@@ -2,8 +2,13 @@
     <input data-bind="value: searchQuery, valueUpdate: 'afterkeydown'" />
 </div>
 
+<div>
+    <label for="titleOnly">Title Only</label>
+    <input id="titleOnly" type="checkbox" data-bind="value: titleOnly" />
+</div>
+
 <div data-bind="text: results().length"></div>
 
 <div data-bind="foreach: getResults(50)">
-    <div data-bind="searchDisplay: {data: $data, query: $root.searchQueryObj()}"></div>
+    <div data-bind="searchDisplay: {data: $data, query: $root.searchQueryObj(), titleOnly: $root.titleOnly()}"></div>
 </div>

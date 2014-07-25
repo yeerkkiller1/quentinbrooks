@@ -1,5 +1,16 @@
-﻿<div data-bind="html: highlightHTML(data.employer)"></div>
-<div data-bind="html: highlightHTML(data.jobTitle)"></div>
-<div data-bind="html: highlightHTML(data.workLocation)"></div>
-<div data-bind="html: highlightHTML(data.levels)"></div>
-<pre class="viewWidth" data-bind="html: highlightHTML(data.jobDesc)"></pre>
+﻿<div>
+    <!-- ko if: titleOnly -->
+    <div data-bind="html: data.employer"></div>
+    <div data-bind="html: highlightHTML(data.jobTitle)"></div>
+    <div data-bind="html: data.workLocation"></div>
+    <div data-bind="html: data.levels"></div>
+    <pre class="viewWidth" data-bind="html: data.jobDesc"></pre>
+    <!-- /ko -->
+    <!-- ko if: !titleOnly -->
+    <div data-bind="html: highlightHTML(data.employer)"></div>
+    <div data-bind="html: highlightHTML(data.jobTitle)"></div>
+    <div data-bind="html: highlightHTML(data.workLocation)"></div>
+    <div data-bind="html: highlightHTML(data.levels)"></div>
+    <pre class="viewWidth" data-bind="html: highlightHTML(data.jobDesc)"></pre>
+    <!-- /ko -->
+</div>

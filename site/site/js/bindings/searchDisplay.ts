@@ -8,12 +8,14 @@ import se = require("./search");
 class searchDisplayParams {
     data: se.searchResult;
     query: se.SearchQuery;
+    titleOnly: boolean;
 }
 
 class searchDisplay {
     public result: se.searchResult;
     public data: any;
     public highlightedHTML: string;
+    public titleOnly: boolean;
 
     query: se.SearchQuery;
 
@@ -25,6 +27,7 @@ class searchDisplay {
         var result = params.data;
         this.result = result;
         this.data = result.item;
+        this.titleOnly = params.titleOnly;
 
         this.query = params.query;
 

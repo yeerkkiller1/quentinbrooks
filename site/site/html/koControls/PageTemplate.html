@@ -1,12 +1,23 @@
 ﻿<div>
     <div data-bind="route: { page: curPageName }"></div>
-    <div class="fullWidth mainGradient header" data-bind="foreach: pages">
-        <button class="pageButton" data-bind="
-            text: name, 
-            click: function(){$root.curPageName(name);},
-            css: { current: $root.curPageName() === name }
-        "></button>
+    <div class="headerHolder mainGradient">
+        <div class="center0">
+            <div class="center1">
+                <div class="center2">
+                    <div class="center3">
+                        <div class="mediaWidth header" data-bind="foreach: pages">
+                            <button class="pageButton" data-bind="
+                            text: name,
+                            click: function(){$root.curPageName(name);},
+                            css: { current: $root.curPageName() === name }
+                        "></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
+
     <!-- ko with: curPage -->
     <div class="center0 headerOffset">
         <div class="center1">

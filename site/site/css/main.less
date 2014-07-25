@@ -16,10 +16,18 @@
 
 //#region Size Dependent Variables
 
+.headerOffset {
+    z-index: 0;
+    position: relative;
+}
+
 //Max size
 @media all and (min-width: 1010px) {
     .mediaWidth {
         width: 1000px;
+    }
+    .headerOffset {
+        top: 42px!important;
     }
 }
 
@@ -28,12 +36,18 @@
     .mediaWidth {
         width: 900px;
     }
+    .headerOffset {
+        top: 66px!important;
+    }
 }
 
 //Half 1600 monitor
 @media all and (max-width: 910px) and (min-width: 690px) {
     .mediaWidth {
         width: 680px;
+    }
+    .headerOffset {
+        top: 66px!important;
     }
 }
 
@@ -42,13 +56,14 @@
     .mediaWidth {
         width: 400px;
     }
+    .headerOffset {
+        top: 96px!important;
+    }
 }
 
 //Not enough room for 1 line menu
 @media all and (max-width: 918px) {
-    .headerOffset {
-        top: 66px!important;
-    }
+    
 }
 
 //Width if you can depend on your container
@@ -138,17 +153,18 @@ pre {
 
 //#region Header
 .header {
-    position: fixed;
     z-index: 1000;
     border-bottom: 1px solid @color3;
     padding: 7px;
 }
 
-.headerOffset {
-    z-index: 0;
-    position: relative;
-    top: 42px;
+.headerHolder {
+    z-index: 1000;
+    position: fixed;
+    width: 100%;
 }
+
+
 //#endregion
 
 //#region Cur Page
