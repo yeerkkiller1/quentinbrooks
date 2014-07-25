@@ -8,14 +8,14 @@ import se = require("./search");
 class searchDisplayParams {
     data: se.searchResult;
     query: se.SearchQuery;
-    titleOnly: boolean;
+    titleOnly: KnockoutObservable<boolean>;
 }
 
 class searchDisplay {
     public result: se.searchResult;
     public data: any;
     public highlightedHTML: string;
-    public titleOnly: boolean;
+    public titleOnly: KnockoutObservable<boolean>;
 
     query: se.SearchQuery;
 

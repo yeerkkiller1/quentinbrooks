@@ -1,4 +1,4 @@
-/// <amd-dependency path="koExtends/persist">
+﻿/// <amd-dependency path="koExtends/persist">
 define(["require", "exports", "knockout", "underscore", "./koControl", "koExtends/persist"], function(require, exports, ko, _, koControl) {
     var searchParams = (function () {
         function searchParams() {
@@ -45,6 +45,9 @@ define(["require", "exports", "knockout", "underscore", "./koControl", "koExtend
             var _this = this;
             this.searchQueryObj = ko.computed(function () {
                 var searchQuery = _this.searchQuery().toLowerCase();
+
+                //Need to get this so we auto-update
+                var titleOnly = _this.titleOnly();
 
                 var verbatim = new RegExp("['\"][^'\"]+['\"]");
 

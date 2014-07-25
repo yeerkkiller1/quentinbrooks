@@ -51,6 +51,8 @@ class search {
     setupSearchQuery() {
         this.searchQueryObj = ko.computed(() => {
             var searchQuery = this.searchQuery().toLowerCase();
+            //Need to get this so we auto-update
+            var titleOnly = this.titleOnly();
 
             var verbatim = new RegExp("['\"][^'\"]+['\"]");
 
