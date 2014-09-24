@@ -7,7 +7,7 @@ curl2="' -H 'Pragma: no-cache' -H 'Accept-Encoding: gzip,deflate,sdch' -H 'Accep
 
 download () {
 	id=$1
-	eval "$curl1$id$curl2 > $id.txt"
+	eval "$curl1$id$curl2 > $id.html"
 }
 
 id="00245000"
@@ -25,6 +25,6 @@ while read p; do
   	then
   	break
   fi
-  #download $p
-  mv "$p.txt" "$p.html"
+  download $p
+  #mv "$p.txt" "$p.html"
 done <ids.txt
