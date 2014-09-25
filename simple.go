@@ -16,6 +16,9 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	if strings.HasSuffix(r.URL.Path, ".css") {
 		w.Header().Set("Content-Type", "text/css")
 	}
+	w.header().Set("Access-Control-Allow-Origin", "*");
+	w.header().Set("Access-Control-Allow-Methods", "GET, OPTIONS");
+	w.header().Set("Access-Control-Allow-Headers", "X-PINGOTHER");
 	http.ServeFile(w, r, "."+r.URL.Path)
 }
 
