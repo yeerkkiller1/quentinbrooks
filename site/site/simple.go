@@ -21,6 +21,10 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "max-age=3600") //Cache for 1 hour
 	}
 
+	w.header().Set("Access-Control-Allow-Origin", "*");
+	w.header().Set("Access-Control-Allow-Methods", "GET, OPTIONS");
+	w.header().Set("Access-Control-Allow-Headers", "X-PINGOTHER");
+
 	url := r.URL.Path
 
 	log.Println(url)
